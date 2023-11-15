@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>FHIR Height and Weight</title>
+    <script src="data.json"></script>
+
+    <script>
+        // condition.js
+
+        var conditionObj = {
+            "resourceType": "Observation",
+            "status": "final",
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "XXX",
+                        "display": "心律"
+                    }
+                ],
+                "text": "心律"
+            },
+            "subject": {
+                "reference": "Patient/11450680"
+            },
+            "effectiveDateTime": "2023-10-17T08:00:00Z",
+            "component": [
+                {
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "http://loinc.org",
+                                "code": "8302-2",
+                                "display": "心律"
+                            }
+                        ],
+                        "text": "心律"
+                    },
+                    "valueQuantity": {
+                        "value": 0,  // 心律的初始值
+                        "unit": "bpm",
+                        "system": "http://unitsofmeasure.org",
+                        "code": "bpm"
+                    }
+                },
+                {
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "http://loinc.org",
+                                "code": "29463-7",
+                                "display": "血壓"
+                            }
+                        ],
+                        "text": "血壓"
+                    },
+                    "valueQuantity": {
+                        "value": 0,  // 血壓的初始值
+                        "unit": "mmHg",
+                        "system": "http://unitsofmeasure.org",
+                        "code": "mmHg"
+                    }
+                }
+            ]
+        }
+
+        function postData() {
+            // 更新身高和體重的值
+            conditionObj.component[0].valueQuantity.value = parseFloat(document.getElementById("height").value);
+            conditionObj.component[0].valueQuantity.value = parseFloat(document.getElementById("blood").value);
+
+            var jsonStr = JSON.stringify(conditionObj);
+            var FHIRrootURL = "https://hapi.fhir.org/baseR4/";
+            var apiURL = FHIRrootURL + "Observation?subject=11450680";
+            HTTPGetData(apiURL, jsonStr);
+        }
+
+        function HTTPGetData(urlStr, dataStr) {
+            var HttpObj = new XMLHttpRequest();
+            HttpObj.open("POST", urlStr, true);
+            HttpObj.setRequestHeader("Content-type", "application/json+fhir");
+            // HttpObj.setRequestHeader("Content-type", "application/xml+fhir");
+            HttpObj.onreadystatechange = function () {
+                //alert(HttpObj.readyState);
+                if (HttpObj.readyState === 4) {
+                    ret = HttpObj.responseText;
+                    alert(ret);
+                    var jsonOBJ = JSON.parse(ret);
+                    if ("id" in jsonOBJ && jsonOBJ.hasOwnProperty("id"))
+                        alert("上傳成功！" + "問卷編號：" + jsonOBJ["id"]);
+                    else
+                        alert("上傳失敗！" + ret);
+                }
+            }
+
+            HttpObj.send(dataStr);
+            //  getData
+        }
+
+
+        function callBack(ret) {
+            console.log(ret);
+        }
+    </script>
+</head>
+
+<body>
+
+    <h1>心律上傳</h1>
+
+    <form id="observationForm">
+        <p>請上傳心律</p>
+
+        <label for="height">心律 (bpm):</label>
+        <input type="number" id="height" step="0.1" />
+
+        <label for="blood">血壓 (mmHg):</label>
+        <input type="number" id="blood" step="0.1" />
+        <button type="button" onclick="postData()">上傳</button><br /><br />
+    </form>
+</body>
+
+</html>
